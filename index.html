@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./index.css"></link>
+</head>
+<body onload="startGame()">
+<script>
+var lines = [];
+var black = [];
+var white = [];
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 1056;
+        this.canvas.height = 594;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frame = 0
+        this.interval = setInterval(updateGameArea, 20);
+    }, 
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    stop : function() {
+        clearInterval(this.interval)
+    }
+}
+
+function updateGameArea() {
+    myGameArea.clear();
+    for(var i = 0; i < lines.length; i++) {
+        lines[i].update()
+    }
+
+    
+    myGameArea.frame += 1;
+}
+
+class line {
+    constructor(startX, startY, endX, endY) {
+        this.startX = startX;
+        this.startY = startY;
+        this.endX = endX;
+        this.endY = endY; 
+    }
+    update() {
+        var ctx = myGameArea.context;
+        ctx.beginPath();
+        ctx.moveTo(this.startX, this.startY);
+        ctx.lineTo(this.endX, this.endY);
+        ctx.closePath();
+        ctx.stroke();
+    }
+}
+
+function startGame() {
+    myGameArea.start();
+    var ctx = myGameArea.context;
+    var startX = (myGameArea.canvas.width / 2) - (8 * 30);
+    var startY = (myGameArea.canvas.height / 2) - (8 * 30);
+    for(var i = 0; i < 17; i++) {
+        lines.push(new line(startX + (30 * i), startY, startX + (30 * i), startY + (16 * 30)))
+    }
+    for(var i = 0; i < 17; i++) {
+        lines.push(new line(startX, startY + (30 * i), startX + (16 * 30), startY + (30 * i)))
+    }
+}
+</script>
+</body>
+</html>
