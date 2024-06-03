@@ -10,6 +10,7 @@
 var lines = [];
 var black = [];
 var white = [];
+var gomokuBoard = [];
 
 var myGameArea = {
     canvas : document.createElement("canvas"),
@@ -32,7 +33,13 @@ var myGameArea = {
 function updateGameArea() {
     myGameArea.clear();
     for(var i = 0; i < lines.length; i++) {
-        lines[i].update()
+        lines[i].update();
+    }
+    for(var i = 0; i < black.length; i++) {
+        black[i].update();
+    }
+    for(var i = 0; i < white.length; i++) {
+        white[i].update();
     }
 
     
@@ -52,33 +59,111 @@ class line {
         ctx.moveTo(this.startX, this.startY);
         ctx.lineTo(this.endX, this.endY);
         ctx.closePath();
+        ctx.strokeStyle = "black";
         ctx.stroke();
     }
 }
 
 
-class black {
+class blacks {
     constructor(x, y) {
         this.x = x;
         this.y = y;
+        gomokuBoard[x][y] = "black";
     }
     update() {
         var ctx = myGameArea.context;
+        var borderX = (myGameArea.canvas.width / 2) - (9 * 30);
+        var borderY = (myGameArea.canvas.height / 2) - (9 * 30);
+        var accX = borderX + (this.x * 30) - 15;
+        var accY = borderY + (this.y * 30) - 15;
         ctx.beginPath();
+        ctx.arc(accX, accY, 12, 0, 2 * Math.PI);
+        ctx.closePath();
+        ctx.strokeStyle = "black";
+        ctx.fillStyle = "black";
+        ctx.stroke();
+        ctx.fill();
+    }
+    checkWin() {
+        var straight = 0; 
+        var horizontal = 0;
+        var inclineLeftUp = 0;
+        var inclineRightUp = 0;
+        // straight
+        var searchX = this.x - 4;
+        var searchY = this.y;
+        for(var i = 0; i < 9; i++) {
+            if(this.legal(searchX, searchY)) {
+                if(gomokuBoard[searchX][searchY] == "black") {
+                    straight += 1;
+                }
+            }
+            searchX += 1;
+        }
+        // horizontal
+        searchX = this.x;
+        searchY = this.y - 4;
+        for(var i = 0; i < 9; i++) {
+            if(this.legal(searchX, searchY)) {
+                if(gomokuBoard[searchX][searchY] == "black") {
+                    horizontal += 1;
+                }
+            }
+            searchY += 1;
+        }
+        // inclineLeftUp
+    }
+    legal(x, y) {
+        var result = true;
+        if((x > 19) || (x < 0) || (y > 19) || (y < 0)) {
+            result = false;
+        }
+        return result;
+    }
+}
+
+class whites {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        gomokuBoard[x][y] = "white";
+    }
+    update() {
+        var ctx = myGameArea.context;
+        var borderX = (myGameArea.canvas.width / 2) - (9 * 30);
+        var borderY = (myGameArea.canvas.height / 2) - (9 * 30);
+        var accX = borderX + (this.x * 30) - 15;
+        var accY = borderY + (this.y * 30) - 15;
+        ctx.beginPath();
+        ctx.arc(accX, accY, 12, 0, 2 * Math.PI);
+        ctx.closePath();
+        ctx.strokeStyle = "white";
+        ctx.fillStyle = "white";
+        ctx.stroke();
+        ctx.fill();
     }
 }
 
 function startGame() {
     myGameArea.start();
     var ctx = myGameArea.context;
-    var startX = (myGameArea.canvas.width / 2) - (8 * 30);
-    var startY = (myGameArea.canvas.height / 2) - (8 * 30);
-    for(var i = 0; i < 17; i++) {
-        lines.push(new line(startX + (30 * i), startY, startX + (30 * i), startY + (16 * 30)))
+    var startX = (myGameArea.canvas.width / 2) - (9 * 30);
+    var startY = (myGameArea.canvas.height / 2) - (9 * 30);
+    for(var i = 0; i < 19; i++) {
+        gomokuBoard.push([]);
+        for(var k = 0; k < 19; k++) {
+            gomokuBoard[i].push(0);
+        }
     }
-    for(var i = 0; i < 17; i++) {
-        lines.push(new line(startX, startY + (30 * i), startX + (16 * 30), startY + (30 * i)))
+    for(var i = 0; i < 19; i++) {
+        lines.push(new line(startX + (30 * i), startY, startX + (30 * i), startY + (18 * 30)))
     }
+    for(var i = 0; i < 19; i++) {
+        lines.push(new line(startX, startY + (30 * i), startX + (18 * 30), startY + (30 * i)))
+    }
+    black.push(new blacks(1, 1));
+    white.push(new whites(5, 7));
 }
 </script>
 </body>
