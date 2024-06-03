@@ -98,6 +98,12 @@ class blacks {
                 if(gomokuBoard[searchX][searchY] == "black") {
                     straight += 1;
                 }
+                else {
+                    straight = 0;
+                }
+            }
+            else {
+                straight = 0;
             }
             searchX += 1;
         }
@@ -109,10 +115,51 @@ class blacks {
                 if(gomokuBoard[searchX][searchY] == "black") {
                     horizontal += 1;
                 }
+                else {
+                    horizontal = 0;
+                }
+            }
+            else {
+                horizontal = 0
             }
             searchY += 1;
         }
         // inclineLeftUp
+        searchX = this.x - 4;
+        searchY = this.y - 4;
+        for(var i = 0; i < 9; i++) {
+            if(this.legal(searchX, searchY)) {
+                if(gomokuBoard[searchX][searchY] == "black") {
+                    inclineLeftUp += 1;
+                }
+                else {
+                    inclineLeftUp = 0;
+                }
+            }
+            else {
+                incluneLeftUp = 0;
+            }
+            searchX += 1;
+            searchY += 1;
+        }
+        // inclineRightUp
+        searchX = this.x - 4;
+        searchY = this.y + 4;
+        for(var i = 0; i < 9; i++) {
+            if(this.legal(searchX, searchY)) {
+                if(gomokuBoard[searchX][searchY] == "black") {
+                    inclineRightUp += 1;
+                }
+                else {
+                    inclineRightUp = 0;
+                }
+            }
+            else {
+                incluneRightUp = 0;
+            }
+            searchX += 1;
+            searchY -= 1;
+        }
     }
     legal(x, y) {
         var result = true;
