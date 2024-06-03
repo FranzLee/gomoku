@@ -56,6 +56,18 @@ class line {
     }
 }
 
+
+class black {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+    update() {
+        var ctx = myGameArea.context;
+        ctx.beginPath();
+    }
+}
+
 function startGame() {
     myGameArea.start();
     var ctx = myGameArea.context;
