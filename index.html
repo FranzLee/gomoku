@@ -11,22 +11,60 @@ var lines = [];
 var black = [];
 var white = [];
 var gomokuBoard = [];
+var mouseHolding = [];
+var playerSetting = {
+    color : "white",
+    status : "setting",
+    recMessage(x) {
+        console.log("in");
+        if(x.status == "your turn") {
+            console.log("hi");
+            playerSetting.status = "your turn";
+        }
+        if(playerSetting.color = "white") {
+            black.push(new blacks(x.location[0], x.location[1]));
+        }
+        else if(playerSetting.color = "black") {
+            white.push(new whites(x.location[0], x.location[1]));
+        }
+    }
+}
+var msg = {
+    status : "",
+    location : ""
+}
 
 var myGameArea = {
     canvas : document.createElement("canvas"),
+    mouseX : 0,
+    mouseY : 0,
+    mouseDown : false,
+    mouseXPoint : "no",
+    mouseYPoint : "no",
     start : function() {
         this.canvas.width = 1056;
         this.canvas.height = 594;
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-        this.frame = 0
+        this.frame = 0;
         this.interval = setInterval(updateGameArea, 20);
+        var canvasRect = myGameArea.canvas.getBoundingClientRect();
+        this.canvas.addEventListener("mousemove", (event) => {
+            this.mouseX = event.clientX - canvasRect.left;
+            this.mouseY = event.clientY - canvasRect.top;
+        });
+        this.canvas.addEventListener("mousedown", () => {
+            this.mouseDown = true;
+        });
+        this.canvas.addEventListener("mouseup", () => {
+            this.mouseDown = false;
+        });
     }, 
     clear : function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     },
     stop : function() {
-        clearInterval(this.interval)
+        clearInterval(this.interval);
     }
 }
 
@@ -42,6 +80,55 @@ function updateGameArea() {
         white[i].update();
     }
 
+    if((myGameArea.mouseX >= (myGameArea.canvas.width / 2 - 9 * 30)) && (myGameArea.mouseX <= myGameArea.canvas.width / 2 + 9 * 30)) {
+        myGameArea.mouseXPoint = Math.floor((myGameArea.mouseX - ((myGameArea.canvas.width / 2) - 9 * 30)) / 30);
+    }
+    else {
+        myGameArea.mouseXPoint = "no";
+    }
+    if((myGameArea.mouseY >= (myGameArea.canvas.height / 2 - 9 * 30)) && (myGameArea.mouseY <= myGameArea.canvas.height / 2 + 9 * 30)) {
+        myGameArea.mouseYPoint = Math.floor((myGameArea.mouseY - ((myGameArea.canvas.height / 2) - 9 * 30)) / 30);
+    }
+    else {
+        myGameArea.mouseYPoint = "no";
+    }
+    if((myGameArea.mouseXPoint != "no") && (myGameArea.mouseYPoint != "no")) {
+        if(gomokuBoard[myGameArea.mouseXPoint][myGameArea.mouseYPoint] == 0) {
+            var ctx = myGameArea.context;
+            var canvasLeft = (myGameArea.canvas.width / 2) - (30 * 9);
+            var canvasUp = (myGameArea.canvas.height / 2) - (30 * 9);
+            ctx.beginPath();
+            ctx.arc(canvasLeft + (myGameArea.mouseXPoint * 30) + 15, canvasUp + (myGameArea.mouseYPoint * 30) + 15, 12, 0, Math.PI * 2);
+            ctx.closePath();
+            if(playerSetting.color == "white") {
+                ctx.strokeStyle = "rgba(255, 255, 240, 0.5)";
+                ctx.fillStyle = "rgba(255, 255, 240, 0.5)";
+            }
+            else if(playerSetting.color == "black") {
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+                ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            }
+            ctx.stroke();
+            ctx.fill();
+        }
+    }
+
+    if(myGameArea.mouseDown && (playerSetting.status == "your turn") && (gomokuBoard[myGameArea.mouseXPoint][myGameArea.mouseYPoint] == 0)) {
+        myGameArea.mouseDown = false;
+        // playerSetting.status = "other";
+        if(playerSetting.color == "white") {
+            white.push(new whites(myGameArea.mouseXPoint, myGameArea.mouseYPoint));
+        }
+        else if(playerSetting.color == "black") {
+            black.push(new blacks(myGameArea.mouseXPoint, myGameArea.mouseYPoint));
+        }
+        // 這待會要刪掉
+        msg.status = "your turn";
+        msg.location = [myGameArea.mouseXPoint, myGameArea.mouseYPoint];
+        package.receive(msg);
+        playerSetting.status = "opponent's turn";
+        console.log("here");
+    }
     
     myGameArea.frame += 1;
 }
@@ -75,8 +162,8 @@ class blacks {
         var ctx = myGameArea.context;
         var borderX = (myGameArea.canvas.width / 2) - (9 * 30);
         var borderY = (myGameArea.canvas.height / 2) - (9 * 30);
-        var accX = borderX + (this.x * 30) - 15;
-        var accY = borderY + (this.y * 30) - 15;
+        var accX = borderX + (this.x * 30) + 15;
+        var accY = borderY + (this.y * 30) + 15;
         ctx.beginPath();
         ctx.arc(accX, accY, 12, 0, 2 * Math.PI);
         ctx.closePath();
@@ -105,6 +192,9 @@ class blacks {
             else {
                 straight = 0;
             }
+            if(straight >= 5) {
+                return true;
+            }
             searchX += 1;
         }
         // horizontal
@@ -123,6 +213,9 @@ class blacks {
                 horizontal = 0
             }
             searchY += 1;
+            if(horizontal >= 5) {
+                return true;
+            }
         }
         // inclineLeftUp
         searchX = this.x - 4;
@@ -141,6 +234,9 @@ class blacks {
             }
             searchX += 1;
             searchY += 1;
+            if(inclineLeftUp >= 5) {
+                return true;
+            }
         }
         // inclineRightUp
         searchX = this.x - 4;
@@ -159,7 +255,11 @@ class blacks {
             }
             searchX += 1;
             searchY -= 1;
+            if(inclineRightUp >= 5) {
+                return true;
+            }
         }
+        return false;
     }
     legal(x, y) {
         var result = true;
@@ -180,8 +280,8 @@ class whites {
         var ctx = myGameArea.context;
         var borderX = (myGameArea.canvas.width / 2) - (9 * 30);
         var borderY = (myGameArea.canvas.height / 2) - (9 * 30);
-        var accX = borderX + (this.x * 30) - 15;
-        var accY = borderY + (this.y * 30) - 15;
+        var accX = borderX + (this.x * 30) + 15;
+        var accY = borderY + (this.y * 30) + 15;
         ctx.beginPath();
         ctx.arc(accX, accY, 12, 0, 2 * Math.PI);
         ctx.closePath();
@@ -190,7 +290,124 @@ class whites {
         ctx.stroke();
         ctx.fill();
     }
+    checkWin() {
+        var straight = 0; 
+        var horizontal = 0;
+        var inclineLeftUp = 0;
+        var inclineRightUp = 0;
+        // straight
+        var searchX = this.x - 4;
+        var searchY = this.y;
+        for(var i = 0; i < 9; i++) {
+            if(this.legal(searchX, searchY)) {
+                if(gomokuBoard[searchX][searchY] == "white") {
+                    straight += 1;
+                }
+                else {
+                    straight = 0;
+                }
+            }
+            else {
+                straight = 0;
+            }
+            searchX += 1;
+            if(straight >= 5) {
+                return true;
+            }
+        }
+        // horizontal
+        searchX = this.x;
+        searchY = this.y - 4;
+        for(var i = 0; i < 9; i++) {
+            if(this.legal(searchX, searchY)) {
+                if(gomokuBoard[searchX][searchY] == "white") {
+                    horizontal += 1;
+                }
+                else {
+                    horizontal = 0;
+                }
+            }
+            else {
+                horizontal = 0
+            }
+            searchY += 1;
+            if(horizontal >= 5) {
+                return true;
+            }
+        }
+        // inclineLeftUp
+        searchX = this.x - 4;
+        searchY = this.y - 4;
+        for(var i = 0; i < 9; i++) {
+            if(this.legal(searchX, searchY)) {
+                if(gomokuBoard[searchX][searchY] == "white") {
+                    inclineLeftUp += 1;
+                }
+                else {
+                    inclineLeftUp = 0;
+                }
+            }
+            else {
+                incluneLeftUp = 0;
+            }
+            searchX += 1;
+            searchY += 1;
+            if(inclineLeftUp >= 5) {
+                return true;
+            }
+        }
+        // inclineRightUp
+        searchX = this.x - 4;
+        searchY = this.y + 4;
+        for(var i = 0; i < 9; i++) {
+            if(this.legal(searchX, searchY)) {
+                if(gomokuBoard[searchX][searchY] == "white") {
+                    inclineRightUp += 1;
+                }
+                else {
+                    inclineRightUp = 0;
+                }
+            }
+            else {
+                incluneRightUp = 0;
+            }
+            searchX += 1;
+            searchY -= 1;
+            if(inclineRightUp >= 5) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
+
+function messageType(loc) {
+    this.status = "your turn";
+    this.location = loc;
+}
+
+var package = {
+    status : "",
+    location : "",
+    counter : 0,
+    self : this,
+    receive(x) {
+        console.log("0");
+        console.log("1");
+        if(package.counter < 6) {
+            var interval = setInterval(() => {
+                console.log("2");
+                package.send(new messageType([0, package.counter]));
+                package.counter += 1;
+                clearInterval(interval);
+            }, 2000);
+        }
+    },
+    send(x) {
+        console.log("3");
+        playerSetting.recMessage(x);
+    },
+};
 
 function startGame() {
     myGameArea.start();
@@ -211,6 +428,7 @@ function startGame() {
     }
     black.push(new blacks(1, 1));
     white.push(new whites(5, 7));
+    playerSetting.status = "your turn";
 }
 </script>
 </body>
