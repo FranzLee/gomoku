@@ -10,22 +10,27 @@
 var lines = [];
 var black = [];
 var white = [];
+var textAndBlocks = [];
 var gomokuBoard = [];
 var mouseHolding = [];
 var playerSetting = {
     color : "white",
     status : "setting",
     recMessage(x) {
-        console.log("in");
-        if(x.status == "your turn") {
-            console.log("hi");
-            playerSetting.status = "your turn";
+        if(x.status == "Your turn") {
+            playerSetting.status = "Your turn";
         }
         if(playerSetting.color = "white") {
             black.push(new blacks(x.location[0], x.location[1]));
+            if(black[black.length - 1].checkWin()) {
+                endGame("black");
+            }
         }
         else if(playerSetting.color = "black") {
             white.push(new whites(x.location[0], x.location[1]));
+            if(white[white.length - 1].checkWin()) {
+                endGame("white");
+            }
         }
     }
 }
@@ -79,6 +84,9 @@ function updateGameArea() {
     for(var i = 0; i < white.length; i++) {
         white[i].update();
     }
+    for(var i = 0; i < textAndBlocks.length; i++) {
+        textAndBlocks[i].update();
+    }
 
     if((myGameArea.mouseX >= (myGameArea.canvas.width / 2 - 9 * 30)) && (myGameArea.mouseX <= myGameArea.canvas.width / 2 + 9 * 30)) {
         myGameArea.mouseXPoint = Math.floor((myGameArea.mouseX - ((myGameArea.canvas.width / 2) - 9 * 30)) / 30);
@@ -113,21 +121,26 @@ function updateGameArea() {
         }
     }
 
-    if(myGameArea.mouseDown && (playerSetting.status == "your turn") && (gomokuBoard[myGameArea.mouseXPoint][myGameArea.mouseYPoint] == 0)) {
+    if(myGameArea.mouseDown && (playerSetting.status == "Your turn") && (gomokuBoard[myGameArea.mouseXPoint][myGameArea.mouseYPoint] == 0)) {
         myGameArea.mouseDown = false;
         // playerSetting.status = "other";
         if(playerSetting.color == "white") {
             white.push(new whites(myGameArea.mouseXPoint, myGameArea.mouseYPoint));
+            if(white[white.length - 1].checkWin()) {
+                endGame("white");
+            }
         }
         else if(playerSetting.color == "black") {
             black.push(new blacks(myGameArea.mouseXPoint, myGameArea.mouseYPoint));
+            if(black[black.length - 1].checkWin()) {
+                endGame("black");
+            }
         }
         // 這待會要刪掉
-        msg.status = "your turn";
+        msg.status = "Your turn";
         msg.location = [myGameArea.mouseXPoint, myGameArea.mouseYPoint];
         package.receive(msg);
-        playerSetting.status = "opponent's turn";
-        console.log("here");
+        playerSetting.status = "Opponent's turn";
     }
     
     myGameArea.frame += 1;
@@ -230,7 +243,7 @@ class blacks {
                 }
             }
             else {
-                incluneLeftUp = 0;
+                inclineLeftUp = 0;
             }
             searchX += 1;
             searchY += 1;
@@ -251,7 +264,7 @@ class blacks {
                 }
             }
             else {
-                incluneRightUp = 0;
+                inclineRightUp = 0;
             }
             searchX += 1;
             searchY -= 1;
@@ -348,7 +361,7 @@ class whites {
                 }
             }
             else {
-                incluneLeftUp = 0;
+                inclineLeftUp = 0;
             }
             searchX += 1;
             searchY += 1;
@@ -369,7 +382,7 @@ class whites {
                 }
             }
             else {
-                incluneRightUp = 0;
+                inclineRightUp = 0;
             }
             searchX += 1;
             searchY -= 1;
@@ -379,10 +392,62 @@ class whites {
         }
         return false;
     }
+    legal(x, y) {
+        var result = true;
+        if((x > 19) || (x < 0) || (y > 19) || (y < 0)) {
+            result = false;
+        }
+        return result;
+    }
+}
+
+class text {
+    constructor() {
+        this.x = 0;
+        this.y = 0;
+    }
+    update() {
+        if(playerSetting.status = "Your turn") {
+            this.x = myGameArea.canvas.width - 185;
+            this.y = myGameArea.canvas.height / 2;  
+        }
+        else if(playerSetting.status = "Opponent's turn") {
+            this.x = myGameArea.canvas.width - 200;
+            this.y = myGameArea.canvas.height / 2;
+        }
+        else if(playerSetting.status = "You won") {
+            this.x = myGameArea.canvas.width - 170;
+            this.y = myGameArea.canvas.height / 2;
+        }
+        else if(playerSetting.status = "You lose") {
+            this.x = myGameArea.canvas.width - 175;
+            this.y = myGameArea.canvas.height / 2;
+        }
+        var ctx = myGameArea.context;
+        ctx.fillStyle = "white";
+        ctx.lineWidth = 3;
+        ctx.font = "30px Arial";
+        ctx.fillText(playerSetting.status, this.x, this.y);
+    }
+}
+
+class block {
+    constructor(x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+    update() {
+        var ctx = myGameArea.context;
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "white";
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+    }
 }
 
 function messageType(loc) {
-    this.status = "your turn";
+    this.status = "Your turn";
     this.location = loc;
 }
 
@@ -392,11 +457,8 @@ var package = {
     counter : 0,
     self : this,
     receive(x) {
-        console.log("0");
-        console.log("1");
         if(package.counter < 6) {
             var interval = setInterval(() => {
-                console.log("2");
                 package.send(new messageType([0, package.counter]));
                 package.counter += 1;
                 clearInterval(interval);
@@ -404,10 +466,21 @@ var package = {
         }
     },
     send(x) {
-        console.log("3");
         playerSetting.recMessage(x);
     },
 };
+
+function endGame(color) {
+    if(color == playerSetting.color) {
+        playerSetting.status = "You won";
+    }
+    else {
+        playerSetting.status = "You lose";
+    }
+    var interval = setInterval(() => {
+        myGameArea.stop()
+    }, 100);
+}
 
 function startGame() {
     myGameArea.start();
@@ -428,7 +501,9 @@ function startGame() {
     }
     black.push(new blacks(1, 1));
     white.push(new whites(5, 7));
-    playerSetting.status = "your turn";
+    playerSetting.status = "Your turn";
+    textAndBlocks.push(new block(myGameArea.canvas.width - 225, myGameArea.canvas.height / 2 - 75, 200, 150));
+    textAndBlocks.push(new text());
 }
 </script>
 </body>
